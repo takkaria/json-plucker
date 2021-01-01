@@ -106,3 +106,5 @@ plucked == expected
 2. DRF serializers -> heavyweight and not type safe, destructure into dictionaries
 3. Elm's JSON decoders -> this design isn't really based on anything in there but ever since using them I wanted similar functionality in Python
 4. `jq`, an amazing commandline tool for querying JSON data
+5. [Parse, don't validate](https://lexi-lambda.github.io/tags/functional-programming.html)
+6. Elm's error messages
