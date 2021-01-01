@@ -57,8 +57,7 @@ def test_incomplete_array():
 
 
 def test_tokeniser_locations_are_correct():
-    path = ".names[].freddo[]"
-    tokens = tokenise(path)
+    tokens = tokenise(".names[].freddo[]")
 
     last = 0
     out = ""
@@ -75,4 +74,5 @@ def test_tokeniser_locations_are_correct():
 
         last = t.location.end
 
+    #             ".names[].freddo[]"
     assert out == " nnnnn** nnnnnn**"
