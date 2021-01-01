@@ -1,4 +1,4 @@
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Tuple
 from .tokeniser import tokenise, Token, ArrayToken, NameToken
 
 
@@ -70,10 +70,10 @@ def _get_from_path(data: Any, path: List[Token]):
         return _get_from_array(data, head, path[1:])
 
 
-def extract(data: Any, path: str):
+def extract(data: Any, path: str) -> Tuple[Any, List[Token]]:
     tokens = tokenise(path)
     try:
-        return _get_from_path(data, tokens)
+        return _get_from_path(data, tokens), tokens
     except ExtractError as exc:
         exc.path = path
         raise exc
