@@ -20,8 +20,21 @@ def test_name_then_array():
         ArrayToken(Range(6, 8)),
     ]
 
-    assert ".names[]"[1:6] == "names"
-    assert ".names[]"[6:8] == "[]"
+
+def test_array_slices_are_correct():
+    path = ".names[]"
+    tokens = tokenise(path)
+
+    [name_token, array_token] = tokens
+
+    def start(token):
+        return token.location.start
+
+    def end(token):
+        return token.location.end
+
+    assert path[start(name_token) : end(name_token)] == "names"
+    assert path[start(array_token) : end(array_token)] == "[]"
 
 
 def test_name_then_array_then_name_then_array():
