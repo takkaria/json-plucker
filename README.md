@@ -21,3 +21,15 @@ payload:
     "from": "Hub <bef34acb948f>"
 }
 ```
+
+
+Nice things about this library:
+
+* Simple syntax
+* Good error messages
+
+```
+Data not in expected format; expected fred to be 'dict' but it was 'list':
+.fred[].v
+ ^^^^
+```
