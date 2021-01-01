@@ -2,3 +2,4 @@ mypy
 black
 pytest
 pytest-coverage
+flake8
