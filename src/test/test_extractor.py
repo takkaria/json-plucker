@@ -37,8 +37,8 @@ def test_getter_array_sub_subs():
 
 def test_getter_array_error():
     data = [
-        {"fred": [{"v": 2}, {"v": 3}]},
-        {"fred": [{"v": 2}, {"v": 3}]},
+        {"fred": []},
+        {"fred": []},
     ]
     path = ".fred[].v"
     with pytest.raises(ExtractError) as exc:
