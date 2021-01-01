@@ -1,5 +1,5 @@
 import pytest
-from .tokeniser import tokenise, ArrayToken, NameToken, Range
+from ..tokeniser import tokenise, ArrayToken, NameToken, Range
 
 
 def test_minimal():
