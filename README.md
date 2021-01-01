@@ -33,3 +33,54 @@ Data not in expected format; expected fred to be 'dict' but it was 'list':
 .fred[].v
  ^^^^
 ```
+
+Example:
+
+
+```python
+from typing import List
+from enum import Enum, auto
+from dataclasses import dataclass
+from datetime import date
+from plucker import pluck, Path
+
+
+class MemberStatus(Enum):
+    CURRENT = auto()
+    EXPIRED = auto()
+
+
+TO_STATUS = {"CUR": MemberStatus.CURRENT, "EXP": MemberStatus.EXPIRED}
+
+
+@dataclass
+class Person:
+    name: str
+    id: int
+
+
+@dataclass
+class StatusChange:
+    date: date
+    state_from: MemberStatus
+    state_to: MemberStatus
+    ids: List[int]
+    num: int
+
+
+def get(json: dict) -> StatusChange:
+    return pluck(
+        json,
+        StatusChange,
+        date=Path(".date"),
+        num=Path(".number_as_str").map(int),
+        state_from=Path(".payload.from").map(TO_STATUS),
+        state_to=Path(".payload.to").map(TO_STATUS),
+        ids=Path(".payload.who[].id"),
+        people=Path(".payload.who[]").into(
+            Person,
+            name=Path(".name"),
+            id=Path(".id"),
+        ),
+    )
+```
