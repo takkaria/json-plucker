@@ -4,17 +4,17 @@ from .tokeniser import tokenise, Token, ArrayToken, NameToken
 T = TypeVar("T")
 
 
-class Pluck:
+class Path:
     def __init__(self, path: str):
         self.path: str = path
         self.mapper = None
         self.type = None
 
-    def map(self, mapper: Union[Callable, dict]) -> "Pluck":
+    def map(self, mapper: Union[Callable, dict]) -> "Path":
         self.mapper = mapper
         return self
 
-    def into(self, __into: T, **kwargs) -> "Pluck":
+    def into(self, __into: T, **kwargs) -> "Path":
         self.type = __into
         return self
 
