@@ -1,15 +1,29 @@
-from typing import List, Union, Tuple, Optional, Sequence
+from typing import List, Union, Tuple, Optional
 import re
 from dataclasses import dataclass
 
 
 @dataclass
-class NameToken:
+class Range:
+    start: int
+    end: int
+
+    def __len__(self):
+        return self.end - self.start
+
+
+@dataclass
+class BaseToken:
+    location: Range
+
+
+@dataclass
+class NameToken(BaseToken):
     name: str
 
 
 @dataclass
-class ArrayToken:
+class ArrayToken(BaseToken):
     pass
 
 
@@ -17,32 +31,38 @@ Token = Union[NameToken, ArrayToken]
 
 
 @dataclass
-class StartState:
+class BaseState:
     pass
 
 
 @dataclass
-class SeparatorState:
+class StartState(BaseState):
+    pass
+
+
+@dataclass
+class SeparatorState(BaseState):
     first: bool
 
 
 @dataclass
-class NameState:
-    captured: str = ""
+class NameState(BaseState):
+    captured: str
+    started_at: int
 
 
 @dataclass
-class ArrayStartState:
-    pass
+class ArrayStartState(BaseState):
+    started_at: int
 
 
 @dataclass
-class ArrayEndState:
-    pass
+class ArrayEndState(BaseState):
+    started_at: int
 
 
 @dataclass
-class FinishedState:
+class FinishedState(BaseState):
     pass
 
 
@@ -73,7 +93,10 @@ class TokeniserError(ValueError):
             return f"{self.message} at index {idx}:\n" + f"{path}\n" + f"{' ' * idx}^"
 
 
-def _process_char(state: State, ch: Union[str, None]) -> Tuple[State, Optional[Token]]:
+def _process_char(
+    state: State, ch: Union[str, None], idx: int
+) -> Tuple[State, Optional[Token]]:
+
     if isinstance(state, StartState):
         if ch != ".":
             raise TokeniserError("All paths should start with the dot")
@@ -87,22 +110,26 @@ def _process_char(state: State, ch: Union[str, None]) -> Tuple[State, Optional[T
             else:
                 raise TokeniserError("Trailing dot at the end of a path")
         elif re.match(NAME, ch):
-            return NameState(captured=ch), None
+            return NameState(captured=ch, started_at=idx), None
         elif ch == "[":
-            return ArrayStartState(), None
+            return ArrayStartState(started_at=idx), None
         else:
             raise TokeniserError("Expected a valid name or the start of an array")
 
     elif isinstance(state, NameState):
+
+        def _name_token(state: NameState) -> NameToken:
+            return NameToken(Range(state.started_at, idx), name=state.captured)
+
         if ch is None:
-            return FinishedState(), NameToken(state.captured)
+            return FinishedState(), _name_token(state)
         elif re.match(NAME, ch):
             state.captured += ch
             return state, None
         elif ch == "[":
-            return ArrayStartState(), NameToken(state.captured)
+            return ArrayStartState(started_at=idx), _name_token(state)
         elif ch == ".":
-            return SeparatorState(first=False), NameToken(state.captured)
+            return SeparatorState(first=False), _name_token(state)
         else:
             raise TokeniserError(f"Was expecting something patching {NAME}")
 
@@ -110,14 +137,18 @@ def _process_char(state: State, ch: Union[str, None]) -> Tuple[State, Optional[T
         if ch != "]":
             raise TokeniserError("Array indicators should be spelled []")
         else:
-            return ArrayEndState(), None
+            return ArrayEndState(started_at=state.started_at), None
 
     elif isinstance(state, ArrayEndState):
+
+        def _array_token(state: ArrayEndState) -> ArrayToken:
+            return ArrayToken(Range(state.started_at, idx))
+
         # We are expecting either EOF or a separator
         if ch is None:
-            return FinishedState(), ArrayToken()
+            return FinishedState(), _array_token(state)
         elif ch == ".":
-            return SeparatorState(first=False), ArrayToken()
+            return SeparatorState(first=False), _array_token(state)
         else:
             raise TokeniserError(
                 "Array end should only be followed by EOF or separator"
@@ -130,18 +161,20 @@ def tokenise(path: str) -> List[Token]:
     state: State = StartState()
     tokens: List[Token] = []
 
+    # It's useful to have an 'EOF' input, so we use None.
     split_path = [*path, None]
 
     for idx, ch in enumerate(split_path):
         try:
             print(state)
-            state, token = _process_char(state, ch)
+            state, token = _process_char(state, ch, idx)
         except TokeniserError as exc:
             exc.context = path, idx
             raise exc
-        else:
-            if token:
-                tokens += [token]
+
+        if token:
+            print(token)
+            tokens += [token]
 
     assert isinstance(state, FinishedState)
     return tokens
