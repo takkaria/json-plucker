@@ -4,10 +4,10 @@ from .tokeniser import tokenise, Token, ArrayToken, NameToken
 
 class ExtractError(ValueError):
     message: str
-    token: Optional[Token]
+    token: Token
     path: Optional[str]
 
-    def __init__(self, token: Optional[Token], message: str):
+    def __init__(self, token: Token, message: str):
         self.token = token
         self.message = message
         self.path = None
@@ -73,7 +73,7 @@ def _get_from_path(data: Any, path: List[Token]):
 def extract(data: Any, path: str):
     tokens = tokenise(path)
     try:
-        _get_from_path(data, tokens)
+        return _get_from_path(data, tokens)
     except ExtractError as exc:
         exc.path = path
         raise exc
