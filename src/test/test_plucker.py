@@ -165,3 +165,29 @@ def test_failed_function_mapping():
         )
 
     assert "Couldn't map .value (value is [1, 2, 3, 4])" in str(exc_info.value)
+
+
+def test_sub_structure():
+    @dataclass
+    class Contact:
+        id: int
+        name: str
+
+    @dataclass
+    class Struct:
+        contacts: List[Contact]
+
+    json = [{"id": 12, "name": "Judy"}, {"id": 53, "name": "Max"}]
+
+    assert (
+        pluck(
+            json,
+            Struct,
+            contacts=Path(".[]").into(
+                Contact,
+                id=Path(".id"),
+                name=Path(".name"),
+            ),
+        )
+        == Struct([Contact(id=12, name="Judy"), Contact(id=53, name="Max")])
+    )

@@ -73,6 +73,7 @@ class Path:
 
     def into(self, __into: Type, **kwargs) -> "Path":
         self.type = __into
+        self.type_kwargs = kwargs
         return self
 
     def _apply_map(self, data: Any, tokens: List[Token]) -> Any:
@@ -94,8 +95,15 @@ class Path:
                     f"Couldn't map {path} (value is {repr(data)})"
                 ) from exc
 
+    def _apply_into(self, data: Any, into: T) -> List[T]:
+        if not into:
+            return data
+        else:
+            return [pluck(row, into, **self.type_kwargs) for row in data]
+
     def pluck(self, data: Any, expected_type: Type[T]) -> T:
         source, tokens = extract(data, self.path)
+        source = self._apply_into(source, self.type)
         source = self._apply_map(source, tokens)
 
         print(source)
