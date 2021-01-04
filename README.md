@@ -90,7 +90,7 @@ expected = Struct(
     date=date(2021, 1, 1),
     id=1242,
     state=Status.CURRENT,
-    affected_records=[1, 22],
+    affected_records=[1, 23],
     contacts=[
         Contact("DM", "dangermouse@example.com"),
         Contact("Stiletto", "baroni@example.com")
