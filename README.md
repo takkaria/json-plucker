@@ -22,7 +22,7 @@ Enter `plucker`.
 `plucker` will either give you type-verified data, or it will fail with helpful error messages:
 
 ```
-Data not in expected format; expected fred to be 'dict' but it was 'list':
+Data not in expected format; expected fred to be 'list' but it was 'dict':
 .fred[].v
  ^^^^
 ```
