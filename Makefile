@@ -8,7 +8,7 @@ lint:
 
 .PHONY: unit
 unit:
-	poetry run pytest --cov=src --cov-report html --cov-report term
+	poetry run pytest
 
 .PHONY: package
 package:
