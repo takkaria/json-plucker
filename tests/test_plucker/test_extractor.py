@@ -1,7 +1,9 @@
 import pytest
+from typing import List
 
-from ..extractor import extract, _get_from_path, ExtractError
-from ..tokeniser import ArrayToken, NameToken, Range
+from plucker.types import JSONValue
+from plucker.extractor import extract, _get_from_path, ExtractError
+from plucker.tokeniser import ArrayToken, NameToken, Range, Token
 
 
 # A fake range cos it doesn't really matter.
@@ -10,19 +12,19 @@ fr = Range(0, 0)
 
 def test_getter():
     data = {"fred": 2}
-    path = [NameToken(fr, "fred")]
+    path: List[Token] = [NameToken(fr, "fred")]
     assert _get_from_path(data, path) == 2
 
 
 def test_getter_array():
     data = {"fred": [2, 3, 4]}
-    path = [NameToken(fr, "fred")]
+    path: List[Token] = [NameToken(fr, "fred")]
     assert _get_from_path(data, path) == [2, 3, 4]
 
 
 def test_getter_array_subs():
     data = {"fred": [{"v": 2}, {"v": 3}]}
-    path = [NameToken(fr, "fred"), ArrayToken(fr), NameToken(fr, "v")]
+    path: List[Token] = [NameToken(fr, "fred"), ArrayToken(fr), NameToken(fr, "v")]
     assert _get_from_path(data, path) == [2, 3]
 
 
@@ -31,12 +33,17 @@ def test_getter_array_sub_subs():
         {"fred": [{"v": 2}, {"v": 3}]},
         {"fred": [{"v": 2}, {"v": 3}]},
     ]
-    path = [ArrayToken(fr), NameToken(fr, "fred"), ArrayToken(fr), NameToken(fr, "v")]
+    path: List[Token] = [
+        ArrayToken(fr),
+        NameToken(fr, "fred"),
+        ArrayToken(fr),
+        NameToken(fr, "v"),
+    ]
     assert _get_from_path(data, path) == [[2, 3], [2, 3]]
 
 
 def test_getter_array_error():
-    data = [
+    data: JSONValue = [
         {"fred": []},
         {"fred": []},
     ]

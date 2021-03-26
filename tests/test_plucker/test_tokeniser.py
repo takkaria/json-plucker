@@ -1,5 +1,5 @@
 import pytest
-from ..tokeniser import tokenise, ArrayToken, NameToken, Range
+from tokeniser import tokenise, ArrayToken, NameToken, Range, Token
 
 
 def test_minimal():
@@ -27,10 +27,10 @@ def test_array_slices_are_correct():
 
     [name_token, array_token] = tokens
 
-    def start(token):
+    def start(token: Token) -> int:
         return token.location.start
 
-    def end(token):
+    def end(token: Token) -> int:
         return token.location.end
 
     assert path[start(name_token) : end(name_token)] == "names"

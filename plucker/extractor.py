@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Tuple
+from typing import List, Any, Optional, Tuple, Dict, TypeVar
 from .tokeniser import tokenise, Token, ArrayToken, NameToken
 
 
@@ -23,7 +23,11 @@ class ExtractError(ValueError):
             return self.message
 
 
-def _get_from_array(data: Any, head: ArrayToken, rest: List[Token]):
+def _get_from_array(
+    data: List[Any],
+    head: ArrayToken,
+    rest: List[Token],
+):
     """
     'data' is a list.  Return a new array containing the contents of each of
     data's entries at location 'path'.
@@ -43,13 +47,11 @@ def _get_from_array(data: Any, head: ArrayToken, rest: List[Token]):
     return [_get_from_path(entry, rest) for entry in data]
 
 
-def _get_from_name(data: Any, head: NameToken, rest: List[Token]):
-    if not isinstance(data, dict):
-        raise ExtractError(
-            head,
-            f"Data not in expected format; expected {head.name} to be 'dict' but it was '{data.__class__.__name__}'",
-        )
-
+def _get_from_name(
+    data: Dict[str, Any],
+    head: NameToken,
+    rest: List[Token],
+):
     try:
         data = data[head.name]
     except KeyError:
@@ -58,15 +60,31 @@ def _get_from_name(data: Any, head: NameToken, rest: List[Token]):
     return _get_from_path(data, rest)
 
 
-def _get_from_path(data: Any, path: List[Token]):
+def _get_from_path(data: Any, path: List[Token]) -> Any:
     if path == []:
         return data
 
     head = path[0]
 
     if isinstance(head, NameToken):
+        if not isinstance(data, dict):
+            raise ExtractError(
+                head,
+                f"Data not in expected format; expected {head.name} to be 'dict'"
+                f" but it was '{data.__class__.__name__}'",
+            )
+
         return _get_from_name(data, head, path[1:])
+
     elif isinstance(head, ArrayToken):
+        if not isinstance(data, list):
+            # TODO: Check this error makes sense
+            raise ExtractError(
+                head,
+                f"Data not in expected format; expected 'list'"
+                f" but it was '{data.__class__.__name__}'",
+            )
+
         return _get_from_array(data, head, path[1:])
 
 

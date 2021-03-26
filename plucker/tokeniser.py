@@ -13,17 +13,14 @@ class Range:
 
 
 @dataclass
-class BaseToken:
+class NameToken:
     location: Range
-
-
-@dataclass
-class NameToken(BaseToken):
     name: str
 
 
 @dataclass
-class ArrayToken(BaseToken):
+class ArrayToken:
+    location: Range
     pass
 
 
@@ -82,7 +79,7 @@ class TokeniserError(ValueError):
     message: str
     context: Optional[Tuple[str, int]] = None
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         self.message = message
 
     def __str__(self):
@@ -94,7 +91,9 @@ class TokeniserError(ValueError):
 
 
 def _process_char(
-    state: State, ch: Union[str, None], idx: int
+    state: State,
+    ch: Union[str, None],
+    idx: int,
 ) -> Tuple[State, Optional[Token]]:
 
     if isinstance(state, StartState):

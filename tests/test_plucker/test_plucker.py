@@ -1,7 +1,7 @@
 import pytest
 from typing import List
 from dataclasses import dataclass
-from ..plucker import pluck, Path, PluckError
+from plucker import pluck, Path, PluckError
 
 
 def test_plucking_basic():
