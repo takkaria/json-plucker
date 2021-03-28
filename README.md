@@ -1,8 +1,13 @@
 # `plucker`
 
-**THIS README MAKES FALSE CLAIMS; THIS SOFTWARE IS PRE-ALPHA**
+[![Build Status](https://github.com/takkaria/plucker/workflows/test/badge.svg?branch=master&event=push)](https://github.com/takkaria/plucker/actions?query=workflow%3Atest)
+[![codecov](https://codecov.io/gh/takkaria/plucker/branch/master/graph/badge.svg)](https://codecov.io/gh/takkaria/plucker)
+[![Python Version](https://img.shields.io/pypi/pyversions/plucker.svg)](https://pypi.org/project/plucker/)
 
-## Rationale
+Validate and extract JSON-sourced data into type-safe dataclasses
+
+
+## wut
 
 * Tired of relying on vendor-provided, untyped Python libraries to interface with external APIs?
 * Want to just make a few simple HTTP requests without the weight of extra dependencies?
@@ -13,9 +18,6 @@
 * Is writing fakes a bit too heavyweight for the APIs you're calling?  Would producing an error on unexpected input work OK for now?
 
 Enter `plucker`.
-
-
-## What does it do
 
 `plucker` is designed to validate, map and reduce regularly structured data into `dataclass`es.  That data would typically be JSON from APIs but could be anything that mostly consists of Python dicts and lists when parsed.
 
@@ -30,7 +32,16 @@ Data not in expected format; expected fred to be 'list' but it was 'dict':
 Just pick the data you want using `jq`-style paths, map it so that it's the right type if you need to, and you have well-typed validated data to feed into the rest of your system.
 
 
+## Installation (soon...)
+
+```bash
+pip install plucker
+```
+
+
 ## Example
+
+
 
 ```python
 from typing import List
@@ -42,25 +53,31 @@ from plucker import pluck, Path
 
 
 class Status(Enum):
+    """A cintact's status."""
     CURRENT = auto()
     EXPIRED = auto()
 
+
 @dataclass
 class Contact:
+    """A contact record."""
     name: str
     email: str
 
+
 @dataclass
 class Struct:
+    """The typed dataclass we want our data collected into."""
     date: date
     id: int
     state: Status
     affected_records: List[int]
     contacts: List[Contact]
 
+
 TO_STATUS = {"CUR": Status.CURRENT, "EXP": Status.EXPIRED}
 
-inp = {
+input_ = {
     "date": "2021-01-01",
     "id": "1242",
     "payload": {
@@ -73,7 +90,7 @@ inp = {
 }
 
 plucked = pluck(
-    inp,
+    input_,
     Struct,
     date=Path(".date"),
     id=Path(".id").map(int),
@@ -97,8 +114,10 @@ expected = Struct(
     ]
 )
 
-plucked == expected
+assert plucked == expected
+# ^ it's True
 ```
+
 
 ## Prior art
 
@@ -108,3 +127,13 @@ plucked == expected
 4. `jq`, an amazing commandline tool for querying JSON data
 5. [Parse, don't validate](https://lexi-lambda.github.io/tags/functional-programming.html)
 6. Elm's error messages
+
+
+## License
+
+[MIT](https://github.com/takkaria/plucker/blob/master/LICENSE)
+
+
+## Credits
+
+A bunch of the tooling was taken from [`wemake-python-package`](https://github.com/wemake-services/wemake-python-package) but then heavily modified.
