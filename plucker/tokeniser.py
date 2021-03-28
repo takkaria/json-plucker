@@ -5,61 +5,87 @@ from dataclasses import dataclass
 
 @dataclass
 class Range:
+    """A range specified as indexes from the beginning of some external referent."""
+
     start: int
     end: int
 
     def __len__(self):
+        """Calculate the length of a range."""
         return self.end - self.start
+
+
+# Token types
+# -----------
+#
+# We only have to kinds of tokens at the moment that the tokeniser can emit: names and
+# arrays.  Each keeps its own location in the string as a Range.
 
 
 @dataclass
 class NameToken:
+    """A token that indexes into a JSON object."""
+
     location: Range
     name: str
 
 
 @dataclass
 class ArrayToken:
+    """A token that tells us we are mapping an array."""
+
     location: Range
-    pass
 
 
 Token = Union[NameToken, ArrayToken]
 
 
+# State machine states
+# --------------------
+#
+# We have a bunch of these.  A given state can store different information.
+
+
 @dataclass
-class BaseState:
+class StartState:
+    """Initial state.  Nothing has been parsed yet."""
+
     pass
 
 
 @dataclass
-class StartState(BaseState):
-    pass
+class SeparatorState:
+    """We have just parsed a dot ('.')."""
 
-
-@dataclass
-class SeparatorState(BaseState):
     first: bool
 
 
 @dataclass
-class NameState(BaseState):
+class NameState:
+    """We are parsing a name."""
+
     captured: str
     started_at: int
 
 
 @dataclass
-class ArrayStartState(BaseState):
+class ArrayStartState:
+    """We have read an array start ('[') character."""
+
     started_at: int
 
 
 @dataclass
-class ArrayEndState(BaseState):
+class ArrayEndState:
+    """We have read an array end (']') character."""
+
     started_at: int
 
 
 @dataclass
-class FinishedState(BaseState):
+class FinishedState:
+    """Reached EOF without problems."""
+
     pass
 
 
@@ -76,13 +102,17 @@ NAME = re.compile(r"[a-zA-Z_-]")
 
 
 class TokeniserError(ValueError):
+    """A parse error while tokenising."""
+
     message: str
     context: Optional[Tuple[str, int]] = None
 
     def __init__(self, message: str):
+        """Initialise a parse error with a message."""
         self.message = message
 
     def __str__(self):
+        """Provide a useful string representation of the error."""
         if self.context is None:
             return self.message
         else:
@@ -157,6 +187,7 @@ def _process_char(  # noqa: C901
 
 
 def tokenise(path: str) -> List[Token]:
+    """Tokenise a path string, returning a list of tokens or raising TokeniserError."""
     state: State = StartState()
     tokens: List[Token] = []
 
