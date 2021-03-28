@@ -4,10 +4,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "plucker"
-description = "validate, map and reduce regularly structured data into dataclasses"
+description = "Validate and extract JSON-sourced data into type-safe dataclasses"
 version = "0.1.0"
 license = "MIT"
-authors = []
+authors = ["Anna Sidwell <anna@takkaria.org>"]
 readme = "README.md"
 repository = "https://github.com/takkaria/plucker"
 keywords = []
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.812"
