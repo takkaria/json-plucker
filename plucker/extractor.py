@@ -1,36 +1,15 @@
-from typing import List, Any, Optional, Tuple, Dict
+from typing import List, Any, Tuple, Dict
 from .tokeniser import tokenise, Token, ArrayToken, NameToken
+from .exceptions import ExtractError
 
 
-class ExtractError(ValueError):
-    message: str
-    token: Token
-    path: Optional[str]
-
-    def __init__(self, token: Token, message: str):
-        self.token = token
-        self.message = message
-        self.path = None
-
-    def __str__(self):
-        if self.path:
-            return (
-                f"{self.message}:\n"
-                f"{self.path}\n"
-                f"{' ' * self.token.location.start}{'^' * len(self.token.location)}"
-            )
-        else:
-            return self.message
-
-
-def _get_from_array(
+def _get_array_from_path(
     data: List[Any],
     head: ArrayToken,
     rest: List[Token],
 ):
     """
-    'data' is a list.  Return a new array containing the contents of each of
-    data's entries at location 'path'.
+    Return a new array containing the contents of each of data's entries at location 'path'.
 
     e.g.
 
@@ -40,14 +19,13 @@ def _get_from_array(
         ]
         path = [NameToken("u"), NameToken("type")]
 
-        _get_from_array(data, path) == ["remove", "add"]
+        _get_array_from_path(data, path) == ["remove", "add"]
 
     """
-
     return [_get_from_path(entry, rest) for entry in data]
 
 
-def _get_from_name(
+def _get_name_from_path(
     data: Dict[str, Any],
     head: NameToken,
     rest: List[Token],
@@ -74,7 +52,7 @@ def _get_from_path(data: Any, path: List[Token]) -> Any:
                 f" but it was '{data.__class__.__name__}'",
             )
 
-        return _get_from_name(data, head, path[1:])
+        return _get_name_from_path(data, head, path[1:])
 
     elif isinstance(head, ArrayToken):
         if not isinstance(data, list):
@@ -85,10 +63,11 @@ def _get_from_path(data: Any, path: List[Token]) -> Any:
                 f" but it was '{data.__class__.__name__}'",
             )
 
-        return _get_from_array(data, head, path[1:])
+        return _get_array_from_path(data, head, path[1:])
 
 
 def extract(data: Any, path: str) -> Tuple[Any, List[Token]]:
+    """Navigate an input using a string path, returning the leaf value."""
     tokens = tokenise(path)
     try:
         return _get_from_path(data, tokens), tokens

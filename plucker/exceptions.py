@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+from typing import Optional
+from .tokeniser import Token
 
 
 class PluckError(TypeError):
@@ -14,20 +15,30 @@ class PluckError(TypeError):
         return self.message
 
 
-class TokeniserError(ValueError):
-    """A parse error while tokenising."""
+class ExtractError(ValueError):
+    """
+    A fancier version of PluckError.
+
+    TODO: Remove PluckError, keep this.
+    """
 
     message: str
-    context: Optional[Tuple[str, int]] = None
+    token: Token
+    path: Optional[str]
 
-    def __init__(self, message: str):
-        """Initialise a parse error with a message."""
+    def __init__(self, token: Token, message: str):
+        """Initialise an error while processing a given token with a message."""
+        self.token = token
         self.message = message
+        self.path = None
 
     def __str__(self):
         """Provide a useful string representation of the error."""
-        if self.context is None:
-            return self.message
+        if self.path:
+            return (
+                f"{self.message}:\n"
+                f"{self.path}\n"
+                f"{' ' * self.token.location.start}{'^' * len(self.token.location)}"
+            )
         else:
-            path, idx = self.context
-            return f"{self.message} at index {idx}:\n" + f"{path}\n" + f"{' ' * idx}^"
+            return self.message

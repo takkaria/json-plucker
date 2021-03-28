@@ -1,7 +1,6 @@
 from typing import List, Union, Tuple, Optional
 import re
 from dataclasses import dataclass
-from .exceptions import TokeniserError
 
 
 @dataclass
@@ -39,6 +38,28 @@ class ArrayToken:
 
 
 Token = Union[NameToken, ArrayToken]
+
+# Tokeniser errors
+# ----------------
+
+
+class TokeniserError(ValueError):
+    """A parse error while tokenising."""
+
+    message: str
+    context: Optional[Tuple[str, int]] = None
+
+    def __init__(self, message: str):
+        """Initialise a parse error with a message."""
+        self.message = message
+
+    def __str__(self):
+        """Provide a useful string representation of the error."""
+        if self.context is None:
+            return self.message
+        else:
+            path, idx = self.context
+            return f"{self.message} at index {idx}:\n" + f"{path}\n" + f"{' ' * idx}^"
 
 
 # State machine states
