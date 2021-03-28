@@ -33,7 +33,7 @@ class PluckError(TypeError):
 
 def _get_type(
     expected_type: Type[Any],
-) -> Tuple[Optional[Type[Any]], Optional[Type[Any]]]:
+) -> Tuple[Type[Any], Optional[Type[Any]]]:
     e_type: Optional[Type[Any]]
     e_subtype: Optional[Type[Any]]
 
