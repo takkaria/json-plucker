@@ -23,7 +23,6 @@ python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.812"
-flake8-pytest-style = "^1.4"
 safety = "^1.10"
 pytest = "^6.2"
 pytest-cov = "^2.11"
