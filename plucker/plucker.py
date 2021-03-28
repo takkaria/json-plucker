@@ -53,10 +53,12 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
     if e_subtype is None:
         if type(data) != e_type:
             path = _reconstruct_path(tokens, [])
+            desired_type = e_type.__name__
+            type_name = type(data).__name__
             raise PluckError(
-                f"{path} should be '{e_type.__name__}' but is '{type(data).__name__}'"
-                "instead"
+                f"{path} should be '{desired_type}' but is '{type_name}' instead"
             )
+
     else:
         if e_type != list:
             raise PluckError(f"Unknown e_type type {e_type}")
@@ -65,9 +67,10 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
             actual_type = type(x)
             if actual_type != e_subtype:
                 path = _reconstruct_path(tokens, [idx])
+                desired_type = e_subtype.__name__
+                type_name = actual_type.__name__
                 raise PluckError(
-                    f"{path} should be '{e_subtype.__name__}' but is"
-                    f"'{actual_type.__name__}' instead"
+                    f"{path} should be '{desired_type}' but is '{type_name}' instead"
                 )
 
 
