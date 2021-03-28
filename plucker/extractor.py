@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Tuple, Dict, TypeVar
+from typing import List, Any, Optional, Tuple, Dict
 from .tokeniser import tokenise, Token, ArrayToken, NameToken
 
 

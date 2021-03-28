@@ -90,7 +90,7 @@ class TokeniserError(ValueError):
             return f"{self.message} at index {idx}:\n" + f"{path}\n" + f"{' ' * idx}^"
 
 
-def _process_char(
+def _process_char(  # noqa: C901
     state: State,
     ch: Union[str, None],
     idx: int,

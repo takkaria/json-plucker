@@ -1,10 +1,10 @@
 import typing
 from dataclasses import is_dataclass
-from typing import Union, Callable, Any, TypeVar, Type, Optional, List
+from typing import Any, TypeVar, Type, Optional, List, Tuple, Dict
 
 from .extractor import extract
 from .tokeniser import Token, ArrayToken, NameToken
-from .types import JSONStructure, JSONValue, Mapper
+from .types import JSONStructure, Mapper, MapperFn
 
 T = TypeVar("T")
 
@@ -31,11 +31,11 @@ class PluckError(TypeError):
         return self.message
 
 
-# This doesn't work for List[List[int]], ie doubly nested, types.
-# We will need to rewrite this to be recursive to handle these.
-def _typecheck(data: Any, expected_type, tokens: List[Token]):
-    e_type: Optional[Any]
-    e_subtype: Optional[Any]
+def _get_type(
+    expected_type: Type[Any],
+) -> Tuple[Optional[Type[Any]], Optional[Type[Any]]]:
+    e_type: Optional[Type[Any]]
+    e_subtype: Optional[Type[Any]]
 
     if expected_type.__module__ == "typing":
         e_type = typing.get_origin(expected_type)
@@ -48,6 +48,14 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
         # TODO: Find a better error message
         raise ValueError("expected_type is none")
         pass
+
+    return e_type, e_subtype
+
+
+# This doesn't work for List[List[int]], ie doubly nested, types.
+# We will need to rewrite this to be recursive to handle these.
+def _typecheck(data: Any, expected_type, tokens: List[Token]):
+    e_type, e_subtype = _get_type(expected_type)
 
     if e_subtype is None:
         if type(data) != e_type:
@@ -85,24 +93,32 @@ class Path:
         self.type_kwargs = kwargs
         return self
 
-    def _apply_map(self, data: Any, tokens: List[Token]) -> Any:
-        if not self.mapper:
-            return data
+    @staticmethod
+    def _apply_map_dict(mapper: Dict[str, Any], data: Any, tokens: List[Token]) -> Any:
+        """Map using a dict, producing an error if necessary."""
+        try:
+            return mapper[data]
+        except KeyError:
+            path = reconstruct_path(tokens, [])
+            raise PluckError(f"Couldn't map {path} (value is {repr(data)})")
 
-        if isinstance(self.mapper, dict):
-            try:
-                return self.mapper[data]
-            except KeyError:
-                path = reconstruct_path(tokens, [])
-                raise PluckError(f"Couldn't map {path} (value is {repr(data)})")
+    @staticmethod
+    def _apply_map_fn(mapper: MapperFn, data: Any, tokens: List[Token]) -> Any:
+        """Map using a function, producing an error if necessary."""
+        try:
+            return mapper(data)
+        except Exception as exc:
+            path = reconstruct_path(tokens, [])
+            raise PluckError(f"Couldn't map {path} (value is {repr(data)})") from exc
+
+    def _apply_map(self, data: Any, tokens: List[Token]) -> Any:
+        """Apply mapping if provided."""
+        if self.mapper is None:
+            return data
+        elif isinstance(self.mapper, dict):
+            return self._apply_map_dict(self.mapper, data, tokens)
         else:
-            try:
-                return self.mapper(data)
-            except Exception as exc:
-                path = reconstruct_path(tokens, [])
-                raise PluckError(
-                    f"Couldn't map {path} (value is {repr(data)})"
-                ) from exc
+            return self._apply_map_fn(self.mapper, data, tokens)
 
     def _apply_into(self, data: Any) -> List[T]:
         if not self.type:
