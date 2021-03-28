@@ -5,11 +5,12 @@ from typing import Any, TypeVar, Type, Optional, List, Tuple, Dict
 from .extractor import extract
 from .tokeniser import Token, ArrayToken, NameToken
 from .types import JSONStructure, Mapper, MapperFn
+from .exceptions import PluckError
 
 T = TypeVar("T")
 
 
-def reconstruct_path(tokens: List[Token], indexes: List[int]) -> str:
+def _reconstruct_path(tokens: List[Token], indexes: List[int]) -> str:
     path = ""
     cur_idx = 0
 
@@ -21,14 +22,6 @@ def reconstruct_path(tokens: List[Token], indexes: List[int]) -> str:
             cur_idx += 1
 
     return path
-
-
-class PluckError(TypeError):
-    def __init__(self, message: str):
-        self.message = message
-
-    def __str__(self):
-        return self.message
 
 
 def _get_type(
@@ -59,7 +52,7 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
 
     if e_subtype is None:
         if type(data) != e_type:
-            path = reconstruct_path(tokens, [])
+            path = _reconstruct_path(tokens, [])
             raise PluckError(
                 f"{path} should be '{e_type.__name__}' but is '{type(data).__name__}'"
                 "instead"
@@ -71,7 +64,7 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
         for idx, x in enumerate(data):
             actual_type = type(x)
             if actual_type != e_subtype:
-                path = reconstruct_path(tokens, [idx])
+                path = _reconstruct_path(tokens, [idx])
                 raise PluckError(
                     f"{path} should be '{e_subtype.__name__}' but is"
                     f"'{actual_type.__name__}' instead"
@@ -79,16 +72,21 @@ def _typecheck(data: Any, expected_type, tokens: List[Token]):
 
 
 class Path:
+    """A path to a value in a JSON representation."""
+
     def __init__(self, path: str):
+        """Specify a path to fill in as the value part of kwargs passed to `pluck`."""
         self.path: str = path
         self.mapper: Optional[Mapper] = None
         self.type: Optional[Type[Any]] = None
 
     def map(self, mapper: Mapper) -> "Path":
+        """Transform the value in the input using `mapper`."""
         self.mapper = mapper
         return self
 
     def into(self, __into: Type[Any], **kwargs) -> "Path":
+        """Parse the value in the input into another dataclass."""
         self.type = __into
         self.type_kwargs = kwargs
         return self
@@ -99,7 +97,7 @@ class Path:
         try:
             return mapper[data]
         except KeyError:
-            path = reconstruct_path(tokens, [])
+            path = _reconstruct_path(tokens, [])
             raise PluckError(f"Couldn't map {path} (value is {repr(data)})")
 
     @staticmethod
@@ -108,7 +106,7 @@ class Path:
         try:
             return mapper(data)
         except Exception as exc:
-            path = reconstruct_path(tokens, [])
+            path = _reconstruct_path(tokens, [])
             raise PluckError(f"Couldn't map {path} (value is {repr(data)})") from exc
 
     def _apply_map(self, data: Any, tokens: List[Token]) -> Any:
@@ -126,7 +124,7 @@ class Path:
         else:
             return [pluck(row, self.type, **self.type_kwargs) for row in data]
 
-    def pluck(self, data: JSONStructure, expected_type: Type[T]) -> T:
+    def _pluck(self, data: JSONStructure, expected_type: Type[T]) -> T:
         source, tokens = extract(data, self.path)
         source = self._apply_into(source)
         source = self._apply_map(source, tokens)
@@ -138,14 +136,15 @@ class Path:
         return source
 
 
-def pluck(__data: JSONStructure, __into: Type[T], **kwargs) -> T:
+def pluck(__data: JSONStructure, __into: Type[T], **kwargs: Path) -> T:
+    """Pluck a set of data specified using kwargs into `__into` using `__data` as input."""
     if not is_dataclass(__into):
         raise ValueError("__into must be a dataclass")
 
     attrs = {}
-    for attr, plucker in kwargs.items():
+    for attr, path in kwargs.items():
         type_of_attr = __into.__annotations__[attr]
-        attrs[attr] = plucker.pluck(__data, type_of_attr)
+        attrs[attr] = path._pluck(__data, type_of_attr)
 
     print(attrs)
 
