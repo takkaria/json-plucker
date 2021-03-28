@@ -1,5 +1,5 @@
 import pytest
-from tokeniser import tokenise, ArrayToken, NameToken, Range, Token
+from plucker.tokeniser import tokenise, ArrayToken, NameToken, Range, Token
 
 
 def test_minimal():

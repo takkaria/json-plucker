@@ -2,8 +2,9 @@ import pytest
 from typing import List
 
 from plucker.types import JSONValue
-from plucker.extractor import extract, _get_from_path, ExtractError
+from plucker.extractor import extract, _get_from_path
 from plucker.tokeniser import ArrayToken, NameToken, Range, Token
+from plucker.exceptions import ExtractError
 
 
 # A fake range cos it doesn't really matter.
